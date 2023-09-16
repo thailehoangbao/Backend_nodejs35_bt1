@@ -1,0 +1,155 @@
+DROP database if exists bai_tap_1;
+CREATE DATABASE bai_tap_1;
+USE bai_tap_1;
+create table users(
+	user_id int primary key auto_increment,
+	full_name varchar(255) not null,
+    email varchar(255) not null,
+    password varchar(255) not null
+);
+
+INSERT INTO users(full_name,email,password)
+VALUES('Thái Bảo','thaibao@gmail.com','12345'),
+('Lê Toàn','letoan@gmail.com','123456'),
+('Lê Hân','hehan@gmail.com','123456'),
+('Trần Tấn','trantan@gmail.com','09873'),
+('Huỳnh Lộc','huynhloc@gmail.com','123456'),
+('Lê Mạnh Hà','manhha@gmail.com','123456');
+
+create table restaurants(
+	res_id int primary key auto_increment,
+	res_name varchar(255) not null,
+    image varchar(255) not null,
+    res_desc varchar(255) not null
+);
+INSERT INTO restaurants(res_name,image,res_desc)
+VALUES('Restaurant 1','res-1.img','Nhà Hàng sang trọng quận 1'),
+('Restaurant 2','res-2.img','Nhà Hàng sang trọng quận 2'),
+('Restaurant 3','res-3.img','Nhà Hàng sang trọng quận 3'),
+('Restaurant 4','res-4.img','Nhà Hàng sang trọng quận 4');
+
+create table like_res(
+	id int primary key auto_increment,
+    user_id int,
+    res_id int,
+    date_like datetime,
+    foreign key (user_id) references users(user_id),
+    foreign key (res_id) references restaurants(res_id)
+);
+
+INSERT INTO like_res(user_id,res_id,date_like)
+VALUES(1,1,'2012-11-10'),(1,3,'2011-09-09'),
+(2,2,'2013-10-01'),(2,4,'2020-11-02'),
+(3,1,'2019-02-03'),(3,2,'2020-07-07'),(3,4,'2021-07-17'),(3,4,'2022-08-12'),
+(4,4,'2022-10-10');
+
+
+CREATE TABLE food(
+	food_id int primary key auto_increment,
+    food_name varchar(255) not null,
+    image varchar(255) not null,
+    price float not null,
+    desc_food varchar(255) not null,
+    type_id int ,
+    foreign key (type_id) references food_type(type_id)
+);
+
+INSERT INTO food(food_name,image,price,desc_food,type_id)
+VALUES('food 1','food 1 img',1000,'good',1),('food 1','food 1 img',1000,'good',3),
+('food 2','food 2 img',1200,'nice',2),
+('food 3','food 3 img',1500,'great',2),('food 3','food 3 img',1500,'good',3);
+
+CREATE TABLE food_type(
+	type_id int primary key auto_increment,
+    type_name varchar(255)
+);
+
+INSERT INTO food_type(type_name)
+VALUES('loại 1'),
+('loại 2'),
+('loại 3');
+
+CREATE TABLE orders(
+	id int primary key auto_increment, 
+	user_id int,
+    food_id int,
+    amount int,
+    code varchar(255),
+    arr_sub_id varchar(255),
+    foreign key (user_id) references users(user_id),
+    foreign key (food_id) references food(food_id)
+);
+
+insert INTO orders(user_id,food_id,amount,code,arr_sub_id)
+VALUES(1,1,10,'discout 10%','arr_sub_id 1'),(1,2,12,'discout 5%','arr_sub_id 2'),
+(2,2,15,'discout 12%','arr_sub_id 2'),(2,3,3,'discout 2%','arr_sub_id 3'),
+(3,1,10,'discout 20%','arr_sub_id 1'),(3,2,7,'discout 7%','arr_sub_id 4'),(3,3,18,'discout 3%','arr_sub_id 5');
+
+
+
+CREATE TABLE sub_food(
+	sub_id int primary key auto_increment,
+    sub_name varchar(255) not null,
+    sub_price float,
+    food_id int,
+    foreign key (food_id) references food(food_id)
+);
+
+INSERT INTO sub_food(sub_name ,sub_price ,food_id )
+VALUES('sub 1',1000,1),('sub 1',1000,3),
+('sub 2',1200,2),('sub 2',1300,4),
+('sub 3',900,1),('sub 3',800,2),('sub 3',1200,3),('sub 3',1500,4);
+
+
+CREATE TABLE rate_res(
+	user_id int,
+    res_id int,
+    amount int,
+    date_tate datetime,
+	foreign key (user_id) references users(user_id),
+    foreign key (res_id) references restaurants(res_id)
+);
+
+INSERT INTO rate_res(user_id,res_id,amount,date_tate)
+VALUES(1,1,5,'2022-11-02'),(1,2,3,'2021-07-05'),(1,3,5,'2022-02-12'),
+(2,3,4,'2022-09-12'),
+(3,1,3,'2019-09-08'),
+(4,2,5,'2023-12-12');
+
+--- tìm 3 người like nhiều nhà hàng nhất
+SELECT COUNT(users.user_id) as luot_likes, users.full_name, users.email 
+FROM like_res 
+inner join users 
+on like_res.user_id = users.user_id
+GROUP BY users.user_id
+ORDER BY COUNT(users.user_id) DESC
+limit 3;
+
+--- tìm 2 nhà hàng có lượt like nhiều nhất
+SELECT COUNT(restaurants.res_id) as luot_likes, restaurants.res_name, restaurants.image, restaurants.res_desc 
+FROM like_res 
+inner join restaurants 
+on like_res.res_id = restaurants.res_id
+GROUP BY restaurants.res_id
+ORDER BY COUNT(restaurants.res_id) DESC
+limit 2;
+
+-- tìm người đã đặt nhà hàng nhiều nhất
+SELECT users.full_name ,SUM(orders.amount) as total_order FROM users
+INNER JOIN orders 
+ON orders.user_id = users.user_id
+right JOIN food
+ON orders.food_id = food.food_id
+group by users.full_name
+ORDER BY total_order DESC
+LIMIT 1;
+
+-- tìm người dùng không hoạt động trong hệ thống 
+SELECT users.full_name,users.email,users.password FROM users
+LEFT JOIN like_res
+on like_res.user_id = users.user_id
+LEFT JOIN orders
+on orders.user_id = users.user_id
+LEFT JOIN rate_res
+on rate_res.user_id = users.user_id
+where rate_res.user_id is null && like_res.user_id is null && orders.user_id is null;
