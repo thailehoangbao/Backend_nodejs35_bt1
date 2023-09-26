@@ -102,15 +102,16 @@ VALUES('sub 1',1000,1),('sub 1',1000,3),
 
 
 CREATE TABLE rate_res(
+	id int primary key auto_increment,
 	user_id int,
     res_id int,
     amount int,
-    date_tate datetime,
+    date_rate datetime,
 	foreign key (user_id) references users(user_id),
     foreign key (res_id) references restaurants(res_id)
 );
 
-INSERT INTO rate_res(user_id,res_id,amount,date_tate)
+INSERT INTO rate_res(user_id,res_id,amount,date_rate)
 VALUES(1,1,5,'2022-11-02'),(1,2,3,'2021-07-05'),(1,3,5,'2022-02-12'),
 (2,3,4,'2022-09-12'),
 (3,1,3,'2019-09-08'),
